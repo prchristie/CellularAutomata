@@ -15,9 +15,11 @@ export class CellularAutomata {
   private deadCell = new Cell(CellState.DEAD);
   width: number;
   height: number;
+  nextGrid: Cell[][];
 
   constructor(width: number, height: number) {
     this.grid = this.createNewGrid(width, height);
+    this.nextGrid = this.createNewGrid(width, height);
     this.width = width;
     this.height = height;
   }
@@ -51,18 +53,16 @@ export class CellularAutomata {
       cell: Cell
     ) => boolean
   ) {
-    const newGrid = this.createNewGrid(this.width, this.height);
-
     this.grid.forEach((row, x) =>
       row.forEach((_, y) => {
         const coord = new Coordinate(x, y);
         const isAlive = stepFunction(coord, this, this.getCell(coord));
         if (isAlive) {
-          newGrid[x][y] = this.liveCell;
+          this.nextGrid[x][y] = this.liveCell;
         }
       })
     );
-    this.grid = newGrid;
+    this.grid = this.nextGrid;
   }
 
   getCell(coord: Coordinate) {
