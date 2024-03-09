@@ -24,7 +24,7 @@ const useInterval = (cb: () => void, timeout: number) => {
 };
 
 const drawCell = (ctx: CanvasRenderingContext2D, x: number, y: number) => {
-  ctx.fillRect(x, y, 10, 10);
+  ctx.fillRect(x, y, 1, 1);
 };
 
 function getMousePos(
@@ -38,42 +38,41 @@ function getMousePos(
   };
 }
 
+const gameOfLifeRules = (CA: CellularAutomata) =>
+  CA.step((coord, grid, cell) => {
+    const directions = [-1, 0, 1];
+    let liveNeighbours = 0;
+    for (const x of directions) {
+      for (const y of directions) {
+        if (x == 0 && y == 0) {
+          continue;
+        }
+        const cell = grid.getCell(new Coordinate(coord.x + x, coord.y + y));
+        if (cell.state == CellState.ALIVE) {
+          liveNeighbours++;
+        }
+      }
+    }
+    if (cell.state == CellState.ALIVE) {
+      if (liveNeighbours < 2 || liveNeighbours > 3) {
+        return false;
+      }
+      return true;
+    }
+
+    if (liveNeighbours === 3) {
+      return true;
+    }
+    return false;
+  });
+
 function App() {
   const [fps, setFps] = useState(0);
 
-  const cellularAutomata = useRef(new CellularAutomata(200, 200));
+  const cellularAutomata = useRef(new CellularAutomata(255, 255));
   const [mouseDown, setMouseDown] = useState(false);
 
-  useInterval(
-    () =>
-      cellularAutomata.current.step((coord, grid, cell) => {
-        const directions = [-1, 0, 1];
-        let liveNeighbours = 0;
-        for (const x of directions) {
-          for (const y of directions) {
-            if (x == 0 && y == 0) {
-              continue;
-            }
-            const cell = grid.getCell(new Coordinate(coord.x + x, coord.y + y));
-            if (cell.state == CellState.ALIVE) {
-              liveNeighbours++;
-            }
-          }
-        }
-        if (cell.state == CellState.ALIVE) {
-          if (liveNeighbours < 2 || liveNeighbours > 3) {
-            return false;
-          }
-          return true;
-        }
-
-        if (liveNeighbours === 3) {
-          return true;
-        }
-        return false;
-      }),
-    1000 / fps
-  );
+  useInterval(() => gameOfLifeRules(cellularAutomata.current), 1000 / fps);
 
   const draw: drawFnType = (ctx) => {
     cellularAutomata.current.getGrid().forEach((row, x) =>
@@ -101,8 +100,9 @@ function App() {
         onMouseMove={(event) => {
           if (!canvas?.current) return;
           const { x, y } = getMousePos(canvas.current, event);
+          const ctx = canvas.current.getContext("2d");
+          ctx!.fillStyle = "white";
           drawCell(canvas.current.getContext("2d")!, x, y);
-
           if (!mouseDown) return;
           cellularAutomata.current.setCellState(
             new Coordinate(Math.round(x), Math.round(y)),
@@ -110,7 +110,10 @@ function App() {
           );
         }}
         canvasRef={canvas}
+        width={255}
+        height={255}
         fps={30}
+        style={{ cursor: "none" }}
       />
       <input
         type="number"

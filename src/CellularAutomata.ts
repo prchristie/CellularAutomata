@@ -60,7 +60,6 @@ export class CellularAutomata {
         if (isAlive) {
           newGrid[x][y] = this.liveCell;
         }
-        // this.setCellState(coord, isAlive ? CellState.ALIVE : CellState.DEAD);
       })
     );
     this.grid = newGrid;
