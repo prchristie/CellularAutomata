@@ -51,13 +51,19 @@ export class CellularAutomata {
       cell: Cell
     ) => boolean
   ) {
+    const newGrid = this.createNewGrid(this.width, this.height);
+
     this.grid.forEach((row, x) =>
       row.forEach((_, y) => {
         const coord = new Coordinate(x, y);
         const isAlive = stepFunction(coord, this, this.getCell(coord));
-        this.setCellState(coord, isAlive ? CellState.ALIVE : CellState.DEAD);
+        if (isAlive) {
+          newGrid[x][y] = this.liveCell;
+        }
+        // this.setCellState(coord, isAlive ? CellState.ALIVE : CellState.DEAD);
       })
     );
+    this.grid = newGrid;
   }
 
   getCell(coord: Coordinate) {

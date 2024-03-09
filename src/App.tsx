@@ -11,7 +11,8 @@ import { CellState, CellularAutomata, Coordinate } from "./CellularAutomata";
 
 const useInterval = (cb: () => void, timeout: number) => {
   useEffect(() => {
-    if (timeout <= 0) {
+    console.log(timeout);
+    if (timeout <= 0 || timeout === Infinity) {
       return;
     }
 
@@ -21,6 +22,11 @@ const useInterval = (cb: () => void, timeout: number) => {
     };
   }, [cb, timeout]);
 };
+
+const drawCell = (ctx: CanvasRenderingContext2D, x: number, y: number) => {
+  ctx.fillRect(x, y, 10, 10);
+};
+
 function getMousePos(
   canvas: HTMLCanvasElement,
   evt: React.MouseEvent<HTMLCanvasElement, MouseEvent>
@@ -33,6 +39,8 @@ function getMousePos(
 }
 
 function App() {
+  const [fps, setFps] = useState(0);
+
   const cellularAutomata = useRef(new CellularAutomata(200, 200));
   const [mouseDown, setMouseDown] = useState(false);
 
@@ -59,19 +67,13 @@ function App() {
           return true;
         }
 
-        if (liveNeighbours == 3) {
+        if (liveNeighbours === 3) {
           return true;
         }
         return false;
       }),
-    1000 / 10
+    1000 / fps
   );
-
-  // useEffect(() => {
-  //   cellularAutomata.current.step(() => {
-  //     return Math.random() < 0.5;
-  //   });
-  // });
 
   const draw: drawFnType = (ctx) => {
     cellularAutomata.current.getGrid().forEach((row, x) =>
@@ -84,7 +86,7 @@ function App() {
             ctx.fillStyle = "black";
             break;
         }
-        ctx.fillRect(x, y, 10, 10);
+        drawCell(ctx, x, y);
       })
     );
   };
@@ -97,15 +99,23 @@ function App() {
         onMouseDown={() => setMouseDown(true)}
         onMouseUp={() => setMouseDown(false)}
         onMouseMove={(event) => {
-          if (!canvas?.current || !mouseDown) return;
+          if (!canvas?.current) return;
           const { x, y } = getMousePos(canvas.current, event);
+          drawCell(canvas.current.getContext("2d")!, x, y);
+
+          if (!mouseDown) return;
           cellularAutomata.current.setCellState(
             new Coordinate(Math.round(x), Math.round(y)),
             CellState.ALIVE
           );
         }}
         canvasRef={canvas}
-        fps={60}
+        fps={30}
+      />
+      <input
+        type="number"
+        value={fps}
+        onChange={(e) => setFps(Number(e.target.value))}
       />
     </>
   );
