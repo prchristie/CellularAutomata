@@ -71,6 +71,7 @@ function App() {
 
   const cellularAutomata = useRef(new CellularAutomata(255, 255));
   const [mouseDown, setMouseDown] = useState(false);
+  const canvas = useRef<HTMLCanvasElement>(null);
 
   useInterval(() => gameOfLifeRules(cellularAutomata.current), 1000 / fps);
 
@@ -89,7 +90,6 @@ function App() {
       })
     );
   };
-  const canvas = useRef<HTMLCanvasElement>(null);
 
   return (
     <>
@@ -133,8 +133,20 @@ const Canvas2D = (
     canvasRef: RefObject<HTMLCanvasElement>;
   } & CanvasHTMLAttributes<HTMLCanvasElement>
 ) => {
-  const frameCount = useRef(0);
   const { drawFn, fps, canvasRef } = props;
+
+  useCanvasAnimation(canvasRef, drawFn, fps);
+
+  return <canvas ref={canvasRef} {...props} />;
+};
+
+export default App;
+function useCanvasAnimation(
+  canvasRef: RefObject<HTMLCanvasElement>,
+  drawFn: drawFnType,
+  fps: number
+) {
+  const frameCount = useRef(0);
 
   useInterval(() => {
     const canvas = canvasRef.current;
@@ -149,8 +161,4 @@ const Canvas2D = (
     frameCount.current++;
     window.requestAnimationFrame(() => drawFn(context, frameCount.current));
   }, 1000 / fps);
-
-  return <canvas ref={canvasRef} {...props} />;
-};
-
-export default App;
+}
