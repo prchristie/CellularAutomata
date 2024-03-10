@@ -59,6 +59,8 @@ export class CellularAutomata {
         const isAlive = stepFunction(coord, this, this.getCell(coord));
         if (isAlive) {
           this.nextGrid[x][y] = this.liveCell;
+        } else {
+          this.nextGrid[x][y] = this.deadCell;
         }
       })
     );
