@@ -24,7 +24,7 @@ const useInterval = (cb: () => void, timeout: number) => {
 };
 
 const drawCell = (ctx: CanvasRenderingContext2D, x: number, y: number) => {
-  ctx.fillRect(x, y, 1, 1);
+  ctx.fillRect(x * 3, y * 3, 3, 3);
 };
 
 function getMousePos(
@@ -110,8 +110,8 @@ function App() {
           );
         }}
         canvasRef={canvas}
-        width={255}
-        height={255}
+        width={255 * 3}
+        height={255 * 3}
         fps={30}
         style={{ cursor: "none" }}
       />
