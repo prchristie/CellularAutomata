@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 export class Coordinate {
   readonly x: number;
   readonly y: number;
@@ -100,3 +102,26 @@ class Cell {
     return this._state;
   }
 }
+
+export const randomizeCA = (CA: CellularAutomata) => {
+  CA.getGrid().forEach((row, x) =>
+    row.forEach((_, y) => {
+      CA.setCellState(
+        new Coordinate(x, y),
+        Math.random() < 0.5 ? CellState.ALIVE : CellState.DEAD
+      );
+    })
+  );
+};
+
+export const useCellularAutomata = (
+  width: number,
+  height: number
+): CellularAutomata => {
+  const cellularAutomata = useMemo(
+    () => new CellularAutomata(width, height),
+    [width, height]
+  );
+
+  return cellularAutomata;
+};
