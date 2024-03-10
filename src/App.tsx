@@ -8,7 +8,7 @@ import {
 import { gameOfLifeRules } from "./CellularAutomata/GameOfLifeRules";
 import { getMousePos, useInterval } from "./lib/utils";
 import { Menu } from "./components/Menu";
-import { Canvas2D, drawFnType } from "./components/Canvas2D";
+import { AnimatedCanvas2D, drawFnType } from "./components/Canvas2D";
 
 const drawCell = (ctx: CanvasRenderingContext2D, x: number, y: number) => {
   ctx.fillRect(x * 3, y * 3, 3, 3);
@@ -18,13 +18,21 @@ const defaultDimensions = 200;
 
 function App() {
   const [dimensions, setDimensions] = useState(defaultDimensions);
-  const [fps, setFps] = useState(0);
+  const [desiredFps, setDesiredFps] = useState(0);
+  const lastTime = useRef(performance.now());
 
   const cellularAutomata = useCellularAutomata(dimensions, dimensions);
   const [mouseDown, setMouseDown] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
 
-  useInterval(() => gameOfLifeRules(cellularAutomata), 1000 / fps);
+  useInterval(() => {
+    const time = performance.now();
+    const diff = time - lastTime.current;
+    const fps = 1000 / diff;
+    lastTime.current = time;
+    console.log(fps);
+    gameOfLifeRules(cellularAutomata);
+  }, 1000 / desiredFps);
 
   useEffect(() => randomizeCA(cellularAutomata), [cellularAutomata]);
 
@@ -62,26 +70,28 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen">
-      <Canvas2D
-        drawFn={useCallback(draw, [cellularAutomata])}
-        onMouseDown={() => setMouseDown(true)}
-        onMouseUp={() => setMouseDown(false)}
-        onMouseMove={handleMouseMove}
-        canvasRef={canvas}
-        width={dimensions}
-        height={dimensions}
-        fps={30}
-        style={{ cursor: "none" }}
-        className="w-screen md:w-2/3"
-      />
-      <Menu
-        fps={fps}
-        setFps={setFps}
-        setDimensions={setDimensions}
-        dimensions={dimensions}
-        cellularAutomata={cellularAutomata}
-      />
+    <div>
+      <div className="flex flex-col md:flex-row h-screen">
+        <AnimatedCanvas2D
+          drawFn={useCallback(draw, [cellularAutomata])}
+          onMouseDown={() => setMouseDown(true)}
+          onMouseUp={() => setMouseDown(false)}
+          onMouseMove={handleMouseMove}
+          canvasRef={canvas}
+          width={dimensions}
+          height={dimensions}
+          fps={15}
+          style={{ cursor: "none" }}
+          className="w-screen md:w-2/3"
+        />
+        <Menu
+          fps={desiredFps}
+          setFps={setDesiredFps}
+          setDimensions={setDimensions}
+          dimensions={dimensions}
+          cellularAutomata={cellularAutomata}
+        />
+      </div>
     </div>
   );
 }

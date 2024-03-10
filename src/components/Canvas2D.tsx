@@ -28,7 +28,7 @@ function useCanvasAnimation(
   }, 1000 / fps);
 }
 
-export const Canvas2D = (
+export const AnimatedCanvas2D = (
   props: {
     drawFn: drawFnType;
     fps: number;
