@@ -69,6 +69,7 @@ const gameOfLifeRules = (CA: CellularAutomata) =>
 
 const fpsOptions = [5, 10, 30, 60];
 const dimensionOptions = [50, 100, 200, 500];
+const defaultDimensions = 200;
 
 const useCellularAutomata = (
   width: number,
@@ -82,8 +83,19 @@ const useCellularAutomata = (
   return cellularAutomata;
 };
 
+const randomizeCA = (CA: CellularAutomata) => {
+  CA.getGrid().forEach((row, x) =>
+    row.forEach((_, y) => {
+      CA.setCellState(
+        new Coordinate(x, y),
+        Math.random() < 0.5 ? CellState.ALIVE : CellState.DEAD
+      );
+    })
+  );
+};
+
 function App() {
-  const [dimensions, setDimensions] = useState(dimensionOptions[0]);
+  const [dimensions, setDimensions] = useState(defaultDimensions);
   const [fps, setFps] = useState(0);
 
   const cellularAutomata = useCellularAutomata(dimensions, dimensions);
@@ -91,6 +103,8 @@ function App() {
   const canvas = useRef<HTMLCanvasElement>(null);
 
   useInterval(() => gameOfLifeRules(cellularAutomata), 1000 / fps);
+
+  useEffect(() => randomizeCA(cellularAutomata), [cellularAutomata]);
 
   const draw: drawFnType = (ctx) => {
     cellularAutomata.getGrid().forEach((row, x) =>
@@ -138,6 +152,7 @@ function App() {
         setFps={setFps}
         setDimensions={setDimensions}
         dimensions={dimensions}
+        cellularAutomata={cellularAutomata}
       />
     </div>
   );
@@ -165,6 +180,7 @@ const Menu = (props: {
   setFps: (fps: number) => void;
   dimensions: number;
   setDimensions: (dims: number) => void;
+  cellularAutomata: CellularAutomata;
 }) => {
   const { fps, setFps, setDimensions } = props;
 
@@ -201,6 +217,9 @@ const Menu = (props: {
           ))}
         </div>
       </label>
+      <Button onClick={() => randomizeCA(props.cellularAutomata)}>
+        Randomize
+      </Button>
     </div>
   );
 };
