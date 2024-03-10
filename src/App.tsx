@@ -193,24 +193,20 @@ const Menu = (props: {
           ))}
         </div>
       </label>
-      <label className="flex flex-col gap-1">
+      <label className="flex flex-col gap-4">
         Dimensions
-        <Select onValueChange={(val) => setDimensions(Number(val))}>
-          <SelectTrigger>
-            <SelectValue placeholder="Dimensions" />
-          </SelectTrigger>
-          <SelectContent>
-            {dimensionOptions.map((d) => (
-              <SelectItem value={d.toString()}>{formatDimension(d)}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        Custom
         <Input
           type="number"
           value={props.dimensions || ""}
           onChange={(e) => setDimensions(Number(e.target.value))}
         ></Input>
+        <div className="flex gap-2">
+          {dimensionOptions.map((dim) => (
+            <Button onClick={() => setDimensions(dim)}>
+              {formatDimension(dim)}
+            </Button>
+          ))}
+        </div>
       </label>
     </div>
   );
