@@ -6,8 +6,9 @@ import {
   useRef,
   useState,
 } from "react";
-import "./App.css";
 import { CellState, CellularAutomata, Coordinate } from "./CellularAutomata";
+import { Button } from "./components/ui/button";
+import { Input } from "./components/ui/input";
 
 const useInterval = (cb: () => void, timeout: number) => {
   useEffect(() => {
@@ -66,6 +67,8 @@ const gameOfLifeRules = (CA: CellularAutomata) =>
     return false;
   });
 
+const fpsOptions = [5, 10, 30, 60];
+
 function App() {
   const [fps, setFps] = useState(0);
 
@@ -92,7 +95,7 @@ function App() {
   };
 
   return (
-    <>
+    <div className="flex flex-col md:flex-row h-screen">
       <Canvas2D
         drawFn={useCallback(draw, [])}
         onMouseDown={() => setMouseDown(true)}
@@ -102,10 +105,10 @@ function App() {
           const { x, y } = getMousePos(canvas.current, event);
           const ctx = canvas.current.getContext("2d");
           ctx!.fillStyle = "white";
-          drawCell(canvas.current.getContext("2d")!, x, y);
+          drawCell(canvas.current.getContext("2d")!, x / 3, y / 3);
           if (!mouseDown) return;
           cellularAutomata.current.setCellState(
-            new Coordinate(Math.round(x), Math.round(y)),
+            new Coordinate(Math.round(x / 3), Math.round(y / 3)),
             CellState.ALIVE
           );
         }}
@@ -114,13 +117,25 @@ function App() {
         height={255 * 3}
         fps={30}
         style={{ cursor: "none" }}
+        className="w-full md:w-2/3"
       />
-      <input
-        type="number"
-        value={fps}
-        onChange={(e) => setFps(Number(e.target.value))}
-      />
-    </>
+      <div className="w-full md:w-1/3 p-3 border-border border-l-4">
+        <label className="flex flex-col gap-4">
+          Updates per second
+          <Input
+            type="number"
+            value={fps || ""}
+            onChange={(e) => setFps(Number(e.target.value))}
+          />
+          <div className="flex gap-2">
+            <Button onClick={() => setFps(0)}>Stop</Button>
+            {fpsOptions.map((fps) => (
+              <Button onClick={() => setFps(fps)}>{fps}</Button>
+            ))}
+          </div>
+        </label>
+      </div>
+    </div>
   );
 }
 
