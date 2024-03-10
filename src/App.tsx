@@ -3,16 +3,23 @@ import {
   RefObject,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import { CellState, CellularAutomata, Coordinate } from "./CellularAutomata";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./components/ui/select";
 
 const useInterval = (cb: () => void, timeout: number) => {
   useEffect(() => {
-    console.log(timeout);
     if (timeout <= 0 || timeout === Infinity) {
       return;
     }
@@ -68,18 +75,32 @@ const gameOfLifeRules = (CA: CellularAutomata) =>
   });
 
 const fpsOptions = [5, 10, 30, 60];
+const dimensionOptions = [50, 100, 200, 500];
+
+const useCellularAutomata = (
+  width: number,
+  height: number
+): CellularAutomata => {
+  const cellularAutomata = useMemo(
+    () => new CellularAutomata(width, height),
+    [width, height]
+  );
+
+  return cellularAutomata;
+};
 
 function App() {
+  const [dimensions, setDimensions] = useState(dimensionOptions[0]);
   const [fps, setFps] = useState(0);
 
-  const cellularAutomata = useRef(new CellularAutomata(255, 255));
+  const cellularAutomata = useCellularAutomata(dimensions, dimensions);
   const [mouseDown, setMouseDown] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
 
-  useInterval(() => gameOfLifeRules(cellularAutomata.current), 1000 / fps);
+  useInterval(() => gameOfLifeRules(cellularAutomata), 1000 / fps);
 
   const draw: drawFnType = (ctx) => {
-    cellularAutomata.current.getGrid().forEach((row, x) =>
+    cellularAutomata.getGrid().forEach((row, x) =>
       row.forEach((cell, y) => {
         switch (cell.state) {
           case CellState.ALIVE:
@@ -97,7 +118,7 @@ function App() {
   return (
     <div className="flex flex-col md:flex-row h-screen">
       <Canvas2D
-        drawFn={useCallback(draw, [])}
+        drawFn={useCallback(draw, [cellularAutomata])}
         onMouseDown={() => setMouseDown(true)}
         onMouseUp={() => setMouseDown(false)}
         onMouseMove={(event) => {
@@ -107,34 +128,24 @@ function App() {
           ctx!.fillStyle = "white";
           drawCell(canvas.current.getContext("2d")!, x / 3, y / 3);
           if (!mouseDown) return;
-          cellularAutomata.current.setCellState(
+          cellularAutomata.setCellState(
             new Coordinate(Math.round(x / 3), Math.round(y / 3)),
             CellState.ALIVE
           );
         }}
         canvasRef={canvas}
-        width={255 * 3}
-        height={255 * 3}
+        width={dimensions}
+        height={dimensions}
         fps={30}
         style={{ cursor: "none" }}
         className="w-full md:w-2/3"
       />
-      <div className="w-full md:w-1/3 p-3 border-border border-l-4">
-        <label className="flex flex-col gap-4">
-          Updates per second
-          <Input
-            type="number"
-            value={fps || ""}
-            onChange={(e) => setFps(Number(e.target.value))}
-          />
-          <div className="flex gap-2">
-            <Button onClick={() => setFps(0)}>Stop</Button>
-            {fpsOptions.map((fps) => (
-              <Button onClick={() => setFps(fps)}>{fps}</Button>
-            ))}
-          </div>
-        </label>
-      </div>
+      <Menu
+        fps={fps}
+        setFps={setFps}
+        setDimensions={setDimensions}
+        dimensions={dimensions}
+      />
     </div>
   );
 }
@@ -156,6 +167,55 @@ const Canvas2D = (
 };
 
 export default App;
+const Menu = (props: {
+  fps: number;
+  setFps: (fps: number) => void;
+  dimensions: number;
+  setDimensions: (dims: number) => void;
+}) => {
+  const { fps, setFps, setDimensions } = props;
+
+  const formatDimension = (dim: number) => `${dim}x${dim}`;
+
+  return (
+    <div className="w-full md:flex-1 p-3 border-border border-l-4 flex flex-col gap-10">
+      <label className="flex flex-col gap-4">
+        Updates per second
+        <Input
+          type="number"
+          value={fps || ""}
+          onChange={(e) => setFps(Number(e.target.value))}
+        />
+        <div className="flex gap-2">
+          <Button onClick={() => setFps(0)}>Stop</Button>
+          {fpsOptions.map((fps) => (
+            <Button onClick={() => setFps(fps)}>{fps}</Button>
+          ))}
+        </div>
+      </label>
+      <label className="flex flex-col gap-1">
+        Dimensions
+        <Select onValueChange={(val) => setDimensions(Number(val))}>
+          <SelectTrigger>
+            <SelectValue placeholder="Dimensions" />
+          </SelectTrigger>
+          <SelectContent>
+            {dimensionOptions.map((d) => (
+              <SelectItem value={d.toString()}>{formatDimension(d)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        Custom
+        <Input
+          type="number"
+          value={props.dimensions || ""}
+          onChange={(e) => setDimensions(Number(e.target.value))}
+        ></Input>
+      </label>
+    </div>
+  );
+};
+
 function useCanvasAnimation(
   canvasRef: RefObject<HTMLCanvasElement>,
   drawFn: drawFnType,
