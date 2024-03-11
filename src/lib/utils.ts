@@ -1,18 +1,25 @@
 import { type ClassValue, clsx } from "clsx";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const useInterval = (cb: () => void, timeout: number) => {
+export const useInterval = (
+  cb: (frameCount: number) => void,
+  timeout: number
+) => {
+  const frameCount = useRef(0);
   useEffect(() => {
     if (timeout <= 0 || timeout === Infinity) {
       return;
     }
 
-    const interval = setInterval(() => cb(), timeout);
+    const interval = setInterval(() => {
+      frameCount.current++;
+      cb(frameCount.current);
+    }, timeout);
     return () => {
       clearInterval(interval);
     };

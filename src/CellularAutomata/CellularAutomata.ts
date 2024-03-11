@@ -8,7 +8,21 @@ export class Coordinate {
     this.x = x;
     this.y = y;
   }
+
+  static from1D(ind: number, width: number) {
+    return new Coordinate(Math.round(ind / width), ind % width);
+  }
+
+  to1D(width: number) {
+    return this.x * width + this.y;
+  }
 }
+
+export type StepFunction = (
+  coordinate: Coordinate,
+  grid: CellularAutomata,
+  cell: Cell
+) => CellState;
 
 export class CellularAutomata {
   private grid: Cell[][];
@@ -18,12 +32,17 @@ export class CellularAutomata {
   width: number;
   height: number;
   nextGrid: Cell[][];
+  wasModified: boolean;
+  outboundModifiedCells: Set<number>;
 
   constructor(width: number, height: number) {
     this.grid = this.createNewGrid(width, height);
     this.nextGrid = this.createNewGrid(width, height);
     this.width = width;
     this.height = height;
+    this.wasModified = false;
+    // For the purpose of rendering, as the simulation may run at a different rate to the renderer
+    this.outboundModifiedCells = new Set<number>();
   }
 
   private createNewGrid(width: number, height: number): Cell[][] {
@@ -38,37 +57,69 @@ export class CellularAutomata {
   }
 
   setCellState(coords: Coordinate, state: CellState) {
-    switch (state) {
-      case CellState.ALIVE:
-        this.grid[coords.x][coords.y] = this.liveCell;
-        break;
-      case CellState.DEAD:
-        this.grid[coords.x][coords.y] = this.deadCell;
-        break;
+    const cell = this.getCell(coords);
+
+    this.grid[coords.x][coords.y] = this.stateToCell(state);
+    // If the cell didn't change, don't do anything
+    if (cell.state === state) {
+      return;
     }
+
+    this.wasModified = true;
+    this.outboundModifiedCells.add(coords.to1D(this.width));
   }
 
-  step(
-    stepFunction: (
-      coordinate: Coordinate,
-      grid: CellularAutomata,
-      cell: Cell
-    ) => boolean
-  ) {
+  private updateCellState(coords: Coordinate, state: CellState) {
+    const cell = this.getCell(coords);
+
+    this.nextGrid[coords.x][coords.y] = this.stateToCell(state);
+    // If the cell didn't change state, don't do anything
+    if (cell.state === state) {
+      return;
+    }
+
+    this.wasModified = true;
+    this.outboundModifiedCells.add(coords.to1D(this.width));
+  }
+
+  step(stepFunction: StepFunction) {
+    if (!this.wasModified) {
+      return;
+    }
+    this.wasModified = false;
+
     this.grid.forEach((row, x) =>
-      row.forEach((_, y) => {
+      row.forEach((cell, y) => {
         const coord = new Coordinate(x, y);
-        const isAlive = stepFunction(coord, this, this.getCell(coord));
-        if (isAlive) {
-          this.nextGrid[x][y] = this.liveCell;
-        } else {
-          this.nextGrid[x][y] = this.deadCell;
-        }
+        const cellState = stepFunction(coord, this, cell);
+        this.updateCellState(coord, cellState);
       })
     );
+
+    if (this.wasModified) this.swapGridBuffers();
+  }
+
+  getModifiedCells() {
+    return this.outboundModifiedCells;
+  }
+
+  resetModifiedCells() {
+    this.outboundModifiedCells = new Set();
+  }
+
+  private swapGridBuffers() {
     const mem = this.grid;
     this.grid = this.nextGrid;
     this.nextGrid = mem;
+  }
+
+  stateToCell(state: CellState) {
+    switch (state) {
+      case CellState.ALIVE:
+        return this.liveCell;
+      case CellState.DEAD:
+        return this.deadCell;
+    }
   }
 
   getCell(coord: Coordinate) {
