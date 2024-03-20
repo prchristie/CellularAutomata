@@ -1,4 +1,8 @@
-import { CellState, Coordinate, StepFunction } from "./CellularAutomata";
+import {
+  CellState,
+  Coordinate,
+  StepFunction,
+} from "@/CellularAutomata/CellularAutomata";
 
 export const gameOfLifeRules = (): StepFunction => (coord, grid, cell) => {
   const directions = [-1, 0, 1];

@@ -24,6 +24,7 @@ function App() {
   const cellularAutomata = useCellularAutomata(dimensions, dimensions);
   const [mouseDown, setMouseDown] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
+  const [stepFn, setStepFn] = useState(() => gol);
 
   useInterval((frameCount) => {
     const logFps = () => {
@@ -38,7 +39,7 @@ function App() {
     }
     lastTime.current = performance.now();
 
-    cellularAutomata.step(gol);
+    cellularAutomata.step(stepFn);
   }, 1000 / desiredFps);
 
   useEffect(() => {
@@ -83,7 +84,7 @@ function App() {
     <div>
       <div className="flex flex-col md:flex-row h-screen">
         <AnimatedCanvas2D
-          drawFn={useCallback(draw, [cellularAutomata])}
+          drawFn={useCallback(draw, [cellularAutomata, dimensions])}
           onMouseDown={() => setMouseDown(true)}
           onMouseUp={() => setMouseDown(false)}
           onMouseMove={handleMouseMove}
@@ -99,6 +100,9 @@ function App() {
           setDimensions={setDimensions}
           dimensions={dimensions}
           cellularAutomata={cellularAutomata}
+          setStepFunction={(fn) => {
+            setStepFn(() => fn);
+          }}
         />
       </div>
     </div>

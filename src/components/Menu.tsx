@@ -1,5 +1,7 @@
+import Editor from "react-simple-code-editor";
 import {
   CellularAutomata,
+  StepFunction,
   randomizeCA,
 } from "../CellularAutomata/CellularAutomata";
 import { Button } from "./ui/button";
@@ -7,6 +9,14 @@ import { Input } from "./ui/input";
 
 const fpsOptions = [5, 10, 30, 60];
 const dimensionOptions = [50, 100, 200, 500];
+import Prism, { highlight } from "prismjs";
+import { useState } from "react";
+import "prismjs/themes/prism.css"; //Example style, you can use another
+
+const createInitialFunction = () => {
+  return `
+  `;
+};
 
 export const Menu = (props: {
   fps: number;
@@ -14,8 +24,10 @@ export const Menu = (props: {
   dimensions: number;
   setDimensions: (dims: number) => void;
   cellularAutomata: CellularAutomata;
+  setStepFunction: (fn: StepFunction) => void;
 }) => {
   const { fps, setFps, setDimensions } = props;
+  const [code, setCode] = useState(createInitialFunction());
 
   const formatDimension = (dim: number) => `${dim}x${dim}`;
 
@@ -55,6 +67,36 @@ export const Menu = (props: {
       <Button onClick={() => randomizeCA(props.cellularAutomata)}>
         Randomize
       </Button>
+      <form className="h-full flex flex-col">
+        <div className="bg-black h-full outline-0 pl-2">
+          <Editor
+            highlight={(code) =>
+              highlight(code, Prism.languages.javascript, "typescript")
+            }
+            value={code}
+            onValueChange={(code) => setCode(code)}
+            className="h-full outline-0"
+          />
+        </div>
+        <Button
+          onClick={(e) => {
+            e.preventDefault();
+            try {
+              const fn = new Function(
+                "coordinate",
+                "grid",
+                "cell",
+                code
+              ) as StepFunction;
+              props.setStepFunction(fn);
+            } catch (e) {
+              console.log(e);
+            }
+          }}
+        >
+          Use
+        </Button>
+      </form>
     </div>
   );
 };
